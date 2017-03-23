@@ -30,7 +30,7 @@ converter
     .on('end_parsed',(data)=>{
         console.log(data.length);
         const ppp = Math.min(points_in_pack,data.length);
-        for(var i=0;i<=data.length-ppp;i+=ppp) {
+        for(var i=0;i<data.length;i+=ppp) {
             (function(t) {
                 const jsdata = data.slice(t,t+ppp);
                 gpx.toGPX({points: jsdata}, function (err, result) {
