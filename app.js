@@ -4,13 +4,12 @@ const csv=require('csvtojson');
 const fs = require('fs');
 const gpx = require('gps-util');
 const request = require('request');
-const points_in_pack = 2000;
+const points_in_pack = 10000;
 
 const converter=csv({
     trim:true,
-    ignoreColumns:[0,2,3,8,9,10,17,18]
 });
-const csvFilePath = 'files/data.csv';
+const csvFilePath = 'files/Coord.csv';
 const gpxFilePath = function(num){
     return 'files/data'+num+'.gpx';
 };
@@ -22,15 +21,9 @@ const toDeg = function(raw) {
 converter
     .fromFile(csvFilePath)
     .transf((jsonObj,csvRow,index)=>{
-        jsonObj.lat=toDeg(csvRow[2]);
-        jsonObj.lng=toDeg(csvRow[3]);
-        jsonObj.angle = Number(csvRow[0]);
-        jsonObj.ele = Number(csvRow[1]);
-        jsonObj.speed = Number(jsonObj.speed);
-        jsonObj.time = new Date(jsonObj.eventdt);
-        delete jsonObj.eventdt;
-        delete jsonObj.height;
-        delete jsonObj.lon;
+        jsonObj.lat=csvRow[0];
+        jsonObj.lng=csvRow[1];
+        jsonObj.time=new Date(csvRow[2]);
     })
     .on('end_parsed',(data)=>{
         console.log(data.length);
@@ -45,17 +38,6 @@ converter
                         fs.writeFile(gpxFilePath(t), res, function (err) {
                             if (err) return console.log(err);
                             console.log('GPX OK: ' + t);
-                        });
-                        request.post({
-                            headers: {'content-type': 'application/gpx+xml'},
-                            url: 'http://192.168.1.199:8988/match?vehicle=car&type=gpx&gpx.route=false&max_visited_nodes=5000&elevation=true&millis='+jsdata[0].time.getTime(),
-                            body: res
-                        }, function (error, response, body) {
-                            if (error) return console.log(error);
-                            fs.writeFile(gpxFilePath(t + '_filtered'), body, function (err) {
-                                if (err) return console.log(err);
-                                console.log('GPX FILTER OK: ' + t);
-                            });
                         });
                     })(result);
                     //console.log(res);
