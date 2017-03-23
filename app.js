@@ -5,6 +5,7 @@ const fs = require('fs');
 const gpx = require('gps-util');
 const request = require('request');
 const points_in_pack = 10000;
+const moment = require('moment');
 
 const converter=csv({
     trim:true,
@@ -23,7 +24,8 @@ converter
     .transf((jsonObj,csvRow,index)=>{
         jsonObj.lat=csvRow[0];
         jsonObj.lng=csvRow[1];
-        jsonObj.time=new Date(csvRow[2]);
+        jsonObj.time=new Date(moment(csvRow[2], "DD.MM.YYYY HH:mm").toDate());
+
     })
     .on('end_parsed',(data)=>{
         console.log(data.length);
