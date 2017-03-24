@@ -14,17 +14,17 @@ const csvFilePath = 'files/Coord.csv';
 const gpxFilePath = function(num){
     return 'files/data'+num+'.gpx';
 };
-const toDeg = function(raw) {
-    const degree = Math.floor(raw / 100);
-    const t = raw - degree * 100;
-    return (degree + t / 60);
-};
 converter
     .fromFile(csvFilePath)
     .transf((jsonObj,csvRow,index)=>{
-        jsonObj.lat=csvRow[0];
-        jsonObj.lng=csvRow[1];
+        jsonObj.lat=Number(csvRow[0]);
+        jsonObj.lng=Number(csvRow[1]);
         jsonObj.time=new Date(moment(csvRow[2], "DD.MM.YYYY HH:mm").toDate());
+        delete jsonObj.data;
+        delete jsonObj.long;
+        delete jsonObj.H;
+        delete jsonObj.M;
+        delete jsonObj.S;
 
     })
     .on('end_parsed',(data)=>{
