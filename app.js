@@ -46,17 +46,6 @@ converter
                             if (err) return console.log(err);
                             console.log('GPX OK: ' + t);
                         });
-                        request.post({
-                            headers: {'content-type': 'application/gpx+xml'},
-                            url: 'http://192.168.1.199:8988/match?vehicle=car&type=gpx&gpx.route=false&max_visited_nodes=5000&elevation=true&millis='+jsdata[0].time.getTime(),
-                            body: res
-                        }, function (error, response, body) {
-                            if (error) return console.log(error);
-                            fs.writeFile(gpxFilePath(t + '_filtered'), body, function (err) {
-                                if (err) return console.log(err);
-                                console.log('GPX FILTER OK: ' + t);
-                            });
-                        });
                     })(result);
                     //console.log(res);
                 });
