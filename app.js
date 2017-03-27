@@ -11,8 +11,8 @@ const converter=csv({
     ignoreColumns:[0,2,3,8,9,10,17,18]
 });
 const csvFilePath = 'files/data.csv';
-const gpxFilePath = function(num){
-    return 'files/data'+num+'.gpx';
+const gpxFilePath = function(par){
+    return 'files/data'+par+'.gpx';
 };
 const toDeg = function(raw) {
     const degree = Math.floor(raw / 100);
@@ -34,15 +34,82 @@ converter
     })
     .on('end_parsed',(data)=>{
         console.log(data.length);
-        const ppp = Math.min(points_in_pack,data.length);
-        for(var i=0;i<data.length;i+=ppp) {
+        var rotatearr = [];
+        var movearr = [];
+        var forwardarr = [];
+        for(var i=0;i<data.length-1;i++){
+            var angl = getAngle(data[i].xacc,data[i].yacc,data[i+1].xacc,data[i+1].yacc);
+            if(angl>10){
+                rotatearr.push(data[i]);
+            }else if(angl>5){
+                movearr.push(data[i]);
+            }else{
+                forwardarr.push(data[i]);
+            }
+        }
+        var ppp = Math.min(points_in_pack,rotatearr.length);
+        for(var i=0;i<rotatearr.length;i+=ppp) {
             (function(t) {
-                const jsdata = data.slice(t,t+ppp);
+                const jsdata = rotatearr.slice(t,t+ppp);
                 gpx.toGPX({points: jsdata}, function (err, result) {
                     (function(res) {
+                        res = res.replace(/trkpt/g, 'wpt');
+                        res = res.replace(/<\/trkseg><\/trk>/g, '');
+                        res = res.replace(/<trk>/g, '');
+                        res = res.replace(/<trkseg>/g, '');
+                        res = res.replace(/ele><time>/g, 'ele><name>');
+                        res = res.replace(/<\/time><\/w/g, '<\/name><\/w');
                         if (err) return console.log(err);
                         console.log('GPX GEN: ' + t);
-                        fs.writeFile(gpxFilePath(t), res, function (err) {
+                        fs.writeFile(gpxFilePath(t+"_rota"), res, function (err) {
+                            if (err) return console.log(err);
+                            console.log('GPX OK: ' + t);
+                        });
+                    })(result);
+                    //console.log(res);
+                });
+            })(i);
+            //console.log(data);
+        }
+        var ppp = Math.min(points_in_pack,movearr.length);
+        for(var i=0;i<movearr.length;i+=ppp) {
+            (function(t) {
+                const jsdata = movearr.slice(t,t+ppp);
+                gpx.toGPX({points: jsdata}, function (err, result) {
+                    (function(res) {
+                        res = res.replace(/trkpt/g, 'wpt');
+                        res = res.replace(/<\/trkseg><\/trk>/g, '');
+                        res = res.replace(/<trk>/g, '');
+                        res = res.replace(/<trkseg>/g, '');
+                        res = res.replace(/ele><time>/g, 'ele><name>');
+                        res = res.replace(/<\/time><\/w/g, '<\/name><\/w');
+                        if (err) return console.log(err);
+                        console.log('GPX GEN: ' + t);
+                        fs.writeFile(gpxFilePath(t+"_move"), res, function (err) {
+                            if (err) return console.log(err);
+                            console.log('GPX OK: ' + t);
+                        });
+                    })(result);
+                    //console.log(res);
+                });
+            })(i);
+            //console.log(data);
+        }
+        var ppp = Math.min(points_in_pack,forwardarr.length);
+        for(var i=0;i<forwardarr.length;i+=ppp) {
+            (function(t) {
+                const jsdata = forwardarr.slice(t,t+ppp);
+                gpx.toGPX({points: jsdata}, function (err, result) {
+                    (function(res) {
+                        res = res.replace(/trkpt/g, 'wpt');
+                        res = res.replace(/<\/trkseg><\/trk>/g, '');
+                        res = res.replace(/<trk>/g, '');
+                        res = res.replace(/<trkseg>/g, '');
+                        res = res.replace(/ele><time>/g, 'ele><name>');
+                        res = res.replace(/<\/time><\/w/g, '<\/name><\/w');
+                        if (err) return console.log(err);
+                        console.log('GPX GEN: ' + t);
+                        fs.writeFile(gpxFilePath(t+"_forw"), res, function (err) {
                             if (err) return console.log(err);
                             console.log('GPX OK: ' + t);
                         });
@@ -59,6 +126,10 @@ converter
         }
         console.log('end')
     });
+
+getAngle = function(x0,y0,x1,y1){
+  return Math.atan2(y1 - y0, x1 - x0) * 180 / Math.PI;
+};
 
 app.get('/', function (req, res) {
     res.send('Hello World!');
