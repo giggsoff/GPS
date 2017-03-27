@@ -17,9 +17,9 @@ const gpxFilePath = function(num){
 converter
     .fromFile(csvFilePath)
     .transf((jsonObj,csvRow,index)=>{
-        jsonObj.lat=Number(csvRow[0]);
-        jsonObj.lng=Number(csvRow[1]);
-        jsonObj.time=new Date(moment(csvRow[2], "DD.MM.YYYY HH:mm").toDate());
+        jsonObj.lat=Number(csvRow[4]);
+        jsonObj.lng=Number(csvRow[5]);
+        jsonObj.time=new Date(moment(csvRow[0], "DD.MM.YYYY HH:mm").toDate());
         delete jsonObj.data;
         delete jsonObj.long;
         delete jsonObj.H;
