@@ -2,10 +2,10 @@
   "name": "gps-simplifier",
   "version": "0.0.1",
   "dependencies": {
-    "express":"*",
-    "csvtojson":"*",
-    "moment":"*",
-    "gps-util":"*",
-    "request":"*"
+    "express": "*",
+    "csvtojson": "*",
+    "moment": "*",
+    "gps-util": "*",
+    "request": "*"
   }
 }

@@ -1,29 +1,32 @@
 const express = require('express');
 const app = express();
-const csv=require('csvtojson');
+const csv = require('csvtojson/v1');
 const fs = require('fs');
 const gpx = require('gps-util');
 const request = require('request');
 const points_in_pack = 2000;
 
-const converter=csv({
-    trim:true,
-    ignoreColumns:[0,2,3,8,9,10,17,18]
+const converter = csv({
+    trim: true,
+    ignoreColumns: [0, 2, 3, 8, 9, 10, 17, 18]
 });
 const csvFilePath = 'files/data.csv';
-const gpxFilePath = function(num){
-    return 'files/data'+num+'.gpx';
+const gpxFilePath = function (num) {
+    return 'files/data' + num + '.gpx';
 };
-const toDeg = function(raw) {
+const toDeg = function (raw) {
     const degree = Math.floor(raw / 100);
     const t = raw - degree * 100;
     return (degree + t / 60);
 };
+
+var len = 0
+
 converter
     .fromFile(csvFilePath)
-    .transf((jsonObj,csvRow,index)=>{
-        jsonObj.lat=toDeg(csvRow[2]);
-        jsonObj.lng=toDeg(csvRow[3]);
+    .transf((jsonObj, csvRow, index) => {
+        jsonObj.lat = toDeg(csvRow[2]);
+        jsonObj.lng = toDeg(csvRow[3]);
         jsonObj.angle = Number(csvRow[0]);
         jsonObj.ele = Number(csvRow[1]);
         jsonObj.speed = Number(jsonObj.speed);
@@ -32,14 +35,15 @@ converter
         delete jsonObj.height;
         delete jsonObj.lon;
     })
-    .on('end_parsed',(data)=>{
+    .on('end_parsed', (data) => {
+        len = data.length;
         console.log(data.length);
-        const ppp = Math.min(points_in_pack,data.length);
-        for(var i=0;i<data.length;i+=ppp) {
-            (function(t) {
-                const jsdata = data.slice(t,t+ppp);
+        const ppp = Math.min(points_in_pack, data.length);
+        for (var i = 0; i < data.length; i += ppp) {
+            (function (t) {
+                const jsdata = data.slice(t, t + ppp);
                 gpx.toGPX({points: jsdata}, function (err, result) {
-                    (function(res) {
+                    (function (res) {
                         if (err) return console.log(err);
                         console.log('GPX GEN: ' + t);
                         fs.writeFile(gpxFilePath(t), res, function (err) {
@@ -48,7 +52,7 @@ converter
                         });
                         request.post({
                             headers: {'content-type': 'application/gpx+xml'},
-                            url: 'http://192.168.1.199:8988/match?vehicle=car&type=gpx&gpx.route=false&max_visited_nodes=5000&elevation=true&millis='+jsdata[0].time.getTime(),
+                            url: 'http://192.168.1.199:8988/match?vehicle=car&type=gpx&gpx.route=false&max_visited_nodes=5000&elevation=true&millis=' + jsdata[0].time.getTime(),
                             body: res
                         }, function (error, response, body) {
                             if (error) return console.log(error);
@@ -64,15 +68,43 @@ converter
             //console.log(data);
         }
     })
-    .on('done',(error)=>{
-        if(error) {
+    .on('done', (error) => {
+        if (error) {
             console.log(error);
         }
         console.log('end')
     });
 
 app.get('/', function (req, res) {
-    res.send('Hello World!');
+            const ppp = Math.min(points_in_pack, len);
+            var arr = [];
+            var maxn = Math.trunc(len/ppp);
+            var n = 0;
+            var ready = 0;
+            for (var i = 0; i < len; i += ppp) {
+                (function (l,n) {
+                    fs.readFile(gpxFilePath(l + '_filtered'), "utf8", function (err, data) {
+                        gpx.gpxParse(data, function (err, data) {
+                            arr[n]=data;
+                            ready++;
+                            if (ready>maxn) {
+                                var rarr = [];
+                                for(var j=0; j<maxn; j++){
+                                    rarr = rarr.concat(arr[j])
+                                }
+                                gpx.toGPX({points: rarr}, function (err, result) {
+                                    fs.writeFile(gpxFilePath('_result'), result, function (err) {
+                                        if (err) return console.log(err);
+                                        console.log('GPX ALL READY');
+                                        res.send('GPX ALL READY');
+                                    });
+                                })
+                            }
+                        });
+                    });
+                })(i,n);
+                n=n+1;
+            }
 });
 
 app.listen(3000, function () {
