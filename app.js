@@ -20,7 +20,7 @@ const toDeg = function (raw) {
     return (degree + t / 60);
 };
 
-var len = 0
+var len = 0;
 
 converter
     .fromFile(csvFilePath)
@@ -75,36 +75,45 @@ converter
         console.log('end')
     });
 
+var bins = {0:{percent:60},1:{percent:30}};
+
+app.get('/bins/:uid', function (req, res) {
+    var uid = req.params.uid;
+    res.send('BIN: '+bins[uid].percent + '%');
+});
+
 app.get('/', function (req, res) {
-            const ppp = Math.min(points_in_pack, len);
-            var arr = [];
-            var maxn = Math.trunc(len/ppp);
-            var n = 0;
-            var ready = 0;
-            for (var i = 0; i < len; i += ppp) {
-                (function (l,n) {
-                    fs.readFile(gpxFilePath(l + '_filtered'), "utf8", function (err, data) {
-                        gpx.gpxParse(data, function (err, data) {
-                            arr[n]=data;
-                            ready++;
-                            if (ready>maxn) {
-                                var rarr = [];
-                                for(var j=0; j<maxn; j++){
-                                    rarr = rarr.concat(arr[j])
-                                }
-                                gpx.toGPX({points: rarr}, function (err, result) {
-                                    fs.writeFile(gpxFilePath('_result'), result, function (err) {
-                                        if (err) return console.log(err);
-                                        console.log('GPX ALL READY');
-                                        res.send('GPX ALL READY');
-                                    });
-                                })
-                            }
-                        });
-                    });
-                })(i,n);
-                n=n+1;
-            }
+    const ppp = Math.min(points_in_pack, len);
+    var arr = [];
+    var maxn = Math.trunc(len / ppp);
+    var n = 0;
+    var ready = 0;
+    for (var i = 0; i < len; i += ppp) {
+        (function (l, n) {
+            fs.readFile(gpxFilePath(l + '_filtered'), "utf8", function (err, data) {
+                gpx.gpxParse(data, function (err, data) {
+                    arr[n] = data;
+                    ready++;
+                    if (ready > maxn) {
+                        var rarr = [];
+                        for (var j = 0; j < maxn; j++) {
+                            rarr = rarr.concat(arr[j])
+                        }
+                        rarr[10].link = 'http://127.0.0.1:3000/bins/0';
+                        rarr[20].link = 'http://127.0.0.1:3000/bins/1';
+                        gpx.toGPX({points: rarr}, function (err, result) {
+                            fs.writeFile(gpxFilePath('_result'), result, function (err) {
+                                if (err) return console.log(err);
+                                console.log('GPX ALL READY');
+                                res.send('GPX ALL READY');
+                            });
+                        })
+                    }
+                });
+            });
+        })(i, n);
+        n = n + 1;
+    }
 });
 
 app.listen(3000, function () {
