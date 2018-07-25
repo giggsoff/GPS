@@ -19,7 +19,9 @@ const toDeg = function (raw) {
     const t = raw - degree * 100;
     return (degree + t / 60);
 };
-
+var avgspeed = 0;
+var sumspeed = 0;
+var maxspeed = 0;
 var len = 0;
 
 converter
@@ -39,6 +41,13 @@ converter
         len = data.length;
         console.log(data.length);
         const ppp = Math.min(points_in_pack, data.length);
+        for (var i =0; i<data.length;i++){
+            if(data[i].speed>maxspeed){
+                maxspeed = data[i].speed
+            }
+            sumspeed+=data[i].speed;
+        }
+        avgspeed = sumspeed/data.length;
         for (var i = 0; i < data.length; i += ppp) {
             (function (t) {
                 const jsdata = data.slice(t, t + ppp);
@@ -75,11 +84,15 @@ converter
         console.log('end')
     });
 
-var bins = {0:{percent:60},1:{percent:30}};
+var bins = {0: {percent: 60}, 1: {percent: 30}};
 
 app.get('/bins/:uid', function (req, res) {
     var uid = req.params.uid;
-    res.send('BIN: '+bins[uid].percent + '%');
+    res.send('BIN: ' + bins[uid].percent + '%');
+});
+
+app.get('/info', function (req, res) {
+    res.send('MAXSPEED: ' + maxspeed + '; AVGSPEED: '+avgspeed);
 });
 
 app.get('/', function (req, res) {
